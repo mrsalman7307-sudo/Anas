@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Event Horizon · Kamran & Ilma</title>
+
+  <!-- Tailwind + Google Fonts (inter & space grotesk) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,800;14..32,900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            abyss: '#05080f',
+            event: '#0b111e',
+            singularity: '#1a1f2f',
+            accretion: '#d4af37',
+            photon: '#f0e9d0',
+            nebula: '#7b8cae',
+            void: '#0d0f17',
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif'],
+          },
+          animation: {
+            'spin-slow': 'spin 32s linear infinite',
+            'spin-reverse': 'spin 26s linear infinite reverse',
+            'pulse-soft': 'pulse 4s ease-in-out infinite',
+            'drift': 'drift 9s ease-in-out infinite',
+            'accretion-glow': 'accretion 3s ease-in-out infinite',
+          },
+          keyframes: {
+            drift: {
+              '0%,100%': { transform: 'translateY(0px) scale(1)' },
+              '50%': { transform: 'translateY(-12px) scale(1.02)' }
+            },
+            accretion: {
+              '0%,100%': { opacity: '0.4', filter: 'blur(3px)' },
+              '50%': { opacity: '0.9', filter: 'blur(0px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overflow-y: scroll;
+      height: 100%;
+      scrollbar-width: none;
+      background: #05080f;
+    }
+    body {
+      background: #05080f;
+      color: #f0e9d0;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+      height: 100%;
+      margin: 0;
+    }
+    ::-webkit-scrollbar { display: none; }
+
+    section {
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      height: 100vh;
+      height: 100dvh;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }
+
+    /* black hole ring & shadow */
+    .event-horizon {
+      background: radial-gradient(circle at 30% 40%, #1f2638 0%, #070b12 90%);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      box-shadow: 0 0 70px rgba(0,0,0,0.9), inset 0 0 60px rgba(0,0,0,0.7);
+    }
+    .accretion-disk {
+      background: radial-gradient(circle at 20% 30%, rgba(212,175,55,0.08), transparent 70%);
+    }
+
+    /* minimal glass */
+    .glass-panel {
+      background: rgba(11, 14, 24, 0.6);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+    }
+
+    .text-accretion {
+      color: #d4af37;
+    }
+    .border-accretion {
+      border-color: #d4af37;
+    }
+
+    /* cursor */
+    #cursor-dot {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 6px; height: 6px;
+      background: #d4af37;
+      border-radius: 50%;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 18px #d4af37;
+    }
+    #cursor-ring {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 40px; height: 40px;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 50%;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.12s ease-out;
+    }
+
+    /* particle burst */
+    .particle-burst {
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      z-index: 9999;
+      animation: particleFlash 0.7s cubic-bezier(0.2, 0.9, 0.4, 1) forwards;
+    }
+    @keyframes particleFlash {
+      0% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }
+
+    /* stepper */
+    .step-dot {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.3);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      cursor: pointer;
+      pointer-events: auto;
+      font-family: 'Inter', sans-serif;
+    }
+    .step-dot.active {
+      border-color: #d4af37;
+      color: #d4af37;
+      background: rgba(212, 175, 55, 0.15);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+      transform: scale(1.1);
+    }
+
+    /* modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s;
+      padding: 1.5rem;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: rgba(11, 14, 24, 0.8);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 2rem;
+      max-width: 540px;
+      width: 100%;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      transform: scale(0.94);
+      transition: transform 0.3s;
+      box-shadow: 0 0 70px rgba(0,0,0,0.8);
+    }
+    .modal-overlay.open .modal-card {
+      transform: scale(1);
+    }
+  </style>
+</head>
+<body class="bg-abyss text-photon">
+
+  <!-- custom cursor -->
+  <div id="cursor-dot" class="hidden md:block"></div>
+  <div id="cursor-ring" class="hidden md:block"></div>
+
+  <!-- background canvas : black hole + particle field -->
+  <canvas id="bh-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+  <!-- ambient glow rings (black hole accretion) -->
+  <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw] max-w-[1000px] max-h-[1000px] rounded-full bg-gradient-radial from-[#d4af37]/5 via-[#d4af37]/5 to-transparent blur-3xl pointer-events-none z-0 animate-accretion-glow"></div>
+  <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[700px] max-h-[700px] rounded-full border border-[#d4af37]/10 pointer-events-none z-0 animate-spin-slow"></div>
+  <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[500px] max-h-[500px] rounded-full border border-[#d4af37]/5 pointer-events-none z-0 animate-spin-reverse"></div>
+
+  <!-- AUDIO BUTTON (black hole hum) -->
+  <div class="fixed top-5 right-5 sm:top-6 sm:right-8 z-50">
+    <button id="btn-sound" class="px-4 py-2.5 rounded-full bg-event/80 border border-accretion/40 backdrop-blur-xl flex items-center gap-3 hover:border-accretion hover:scale-105 transition-all shadow-2xl text-photon group">
+      <svg id="sound-off" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accretion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/>
+      </svg>
+      <svg id="sound-on" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 hidden text-accretion animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      </svg>
+      <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-accretion">Event Horizon</span>
+    </button>
+  </div>
+
+  <!-- MAIN SCROLL SECTIONS -->
+  <main class="relative z-10">
+
+    <!-- SECTION 1 : TITLES & NAMES (black hole theme) -->
+    <section id="sec-0" class="relative">
+      <div class="max-w-4xl mx-auto text-center flex flex-col items-center relative z-10 animate-drift">
+        <div class="mb-5 px-5 py-1.5 rounded-full border border-accretion/40 bg-event/60 backdrop-blur-sm">
+          <span class="text-[10px] tracking-[0.35em] font-bold uppercase text-accretion">Singularity · 2026</span>
+        </div>
+        <p class="text-sm sm:text-base font-light italic text-photon/60 mb-3 tracking-wide">In the name of the Most Gracious</p>
+        <h1 class="font-display text-6xl sm:text-8xl md:text-9xl font-bold leading-[1.05] tracking-tight">
+          <span class="text-white drop-shadow-[0_0_30px_rgba(212,175,55,0.3)]">Kamran</span>
+          <span class="text-accretion drop-shadow-[0_0_35px_rgba(212,175,55,0.2)] block sm:inline-block">Azam</span>
+        </h1>
+        <span class="text-3xl sm:text-5xl font-light text-photon/40 my-1">&amp;</span>
+        <h1 class="font-display text-6xl sm:text-8xl md:text-9xl font-bold leading-[1.05]">
+          <span class="text-white drop-shadow-[0_0_30px_rgba(212,175,55,0.3)]">Ilma</span>
+        </h1>
+        <div class="mt-6 px-6 py-2.5 rounded-full border border-accretion/30 bg-event/70 backdrop-blur-sm">
+          <span class="text-xs tracking-[0.3em] font-bold text-photon/80">✧ 3 NOVEMBER 2026 ✧</span>
+        </div>
+      </div>
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50">
+        <span class="text-[8px] tracking-[0.3em] uppercase text-accretion">descend</span>
+        <div class="w-[1px] h-8 bg-gradient-to-b from-accretion to-transparent"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 2 : DEDICATED TO BHAI (anas) with black hole accent -->
+    <section id="sec-1" class="relative">
+      <div class="max-w-3xl mx-auto text-center flex flex-col items-center z-10 animate-drift">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-[1px] bg-accretion/30"></div>
+          <svg class="w-5 h-5 text-accretion animate-spin-slow" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+          <div class="w-10 h-[1px] bg-accretion/30"></div>
+        </div>
+        <div class="px-6 py-2 rounded-full glass-panel border border-accretion/30 mb-5">
+          <span class="text-xs tracking-[0.4em] font-bold text-accretion">BHAI</span>
+        </div>
+        <h2 class="font-display text-7xl sm:text-9xl font-bold text-white drop-shadow-[0_0_40px_rgba(212,175,55,0.15)]">Anas</h2>
+        <p class="mt-5 text-base sm:text-xl md:text-2xl font-light italic text-photon/70 max-w-xl leading-relaxed">
+          “Your presence bends the light of our universe. With love, we invite you.”
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 3 : MESSAGE CARD (black hole card) -->
+    <section id="sec-2" class="relative">
+      <div class="max-w-3xl w-full glass-panel rounded-3xl p-8 sm:p-12 md:p-14 text-center relative overflow-hidden border border-accretion/30 shadow-2xl">
+        <div class="absolute -top-32 -left-32 w-80 h-80 bg-accretion/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-32 -right-32 w-80 h-80 bg-accretion/5 rounded-full blur-3xl pointer-events-none"></div>
+        <p class="text-[11px] tracking-[0.35em] font-bold text-accretion/70 uppercase mb-4">Gravitational Pull</p>
+        <h3 class="font-display text-2xl sm:text-4xl md:text-5xl font-bold leading-snug text-white">
+          Anas Bhai, your support is the dark matter that holds our galaxy together.
+        </h3>
+        <p class="mt-4 text-base sm:text-xl font-light italic text-photon/60">
+          May the Almighty fill your orbit with peace, barakah, and light.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 4 : BLESSINGS (JazakAllah) + hidden dua -->
+    <section id="sec-3" class="relative">
+      <div class="max-w-3xl mx-auto text-center flex flex-col items-center animate-drift">
+        <h2 class="font-display text-5xl sm:text-7xl md:text-8xl font-bold text-accretion drop-shadow-[0_0_40px_rgba(212,175,55,0.2)]">
+          JazakAllahu Khairan
+        </h2>
+        <p class="mt-2 text-xl sm:text-3xl font-light italic text-photon/70">Keep Kamran &amp; Ilma in your prayers</p>
+        <div class="mt-6 glass-panel rounded-2xl px-6 py-4 max-w-sm border border-accretion/20">
+          <p class="text-sm sm:text-lg font-light italic text-photon/60">“Your duas are the photons escaping the black hole.”</p>
+        </div>
+        <!-- blessing star -->
+        <div id="bless-trigger" class="mt-8 cursor-pointer group flex flex-col items-center">
+          <button class="p-4 rounded-full bg-event/80 border border-accretion/50 hover:scale-110 transition-all shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+            <svg class="w-6 h-6 text-accretion animate-pulse" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          </button>
+          <span class="text-[9px] uppercase tracking-[0.3em] font-bold text-accretion/60 mt-2 group-hover:text-accretion transition-colors">send blessing</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- STEPPER (footer) -->
+  <footer class="fixed bottom-0 left-0 right-0 z-40 px-6 py-4 pointer-events-none">
+    <div class="max-w-[200px] mx-auto flex flex-col gap-2">
+      <div class="w-full h-[2px] bg-white/5 relative rounded-full overflow-hidden">
+        <div id="progress-fill" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-accretion to-accretion/40 transition-all duration-300"></div>
+      </div>
+      <div class="flex justify-between items-center">
+        <button data-idx="0" class="step-dot active">01</button>
+        <button data-idx="1" class="step-dot">02</button>
+        <button data-idx="2" class="step-dot">03</button>
+        <button data-idx="3" class="step-dot">04</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BLESSING MODAL -->
+  <div id="bless-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="w-14 h-14 rounded-full bg-accretion/10 border border-accretion/30 flex items-center justify-center mx-auto mb-5">
+        <svg class="w-7 h-7 text-accretion" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+      <p class="font-display text-xl sm:text-2xl md:text-3xl font-medium leading-relaxed text-photon/90">
+        “May Allah envelope Anas Bhai in mercy, grant him health, and shower barakah upon our family.”
+      </p>
+      <button id="close-modal" class="mt-6 px-8 py-2.5 rounded-full border border-accretion/40 bg-accretion/10 text-accretion font-bold text-xs tracking-widest hover:bg-accretion/20 transition-all">Ameen 🤲</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- BLACK HOLE CANVAS ----------
+      const canvas = document.getElementById('bh-canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H;
+
+      function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // stars (accretion disk particles)
+      const stars = [];
+      const STAR_COUNT = Math.min(180, Math.floor((W * H) / 6000));
+
+      class Star {
+        constructor() { this.reset(); }
+        reset() {
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          this.r = Math.random() * 1.6 + 0.4;
+          this.a = Math.random() * 0.7 + 0.2;
+          this.speed = 0.004 + Math.random() * 0.012;
+          this.phase = Math.random() * 6.28;
+          this.color = Math.random() > 0.6 ? '#d4af37' : '#c0cbd6';
+        }
+        draw() {
+          const flicker = 0.6 + 0.4 * Math.sin(this.phase);
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = this.a * flicker;
+          ctx.shadowBlur = this.r * 3;
+          ctx.shadowColor = this.color;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+        }
+        update() {
+          this.phase += this.speed;
+        }
+      }
+
+      // black hole core + accretion ring (static drawn in animation)
+      for (let i = 0; i < STAR_COUNT; i++) stars.push(new Star());
+
+      // meteors (tiny)
+      const meteors = [];
+      for (let i = 0; i < 3; i++) {
+        meteors.push({
+          x: Math.random() * W,
+          y: Math.random() * H * 0.3,
+          len: 40 + Math.random() * 70,
+          speed: 3 + Math.random() * 6,
+          alpha: 0.6 + Math.random() * 0.4,
+          size: 0.7 + Math.random() * 0.8,
+        });
+      }
+
+      function drawBlackHole() {
+        // center
+        const cx = W * 0.5, cy = H * 0.5;
+        // draw stars
+        stars.forEach(s => { s.update(); s.draw(); });
+        // meteors
+        meteors.forEach(m => {
+          m.x += m.speed;
+          m.y += m.speed * 0.5;
+          m.alpha -= 0.005;
+          if (m.y > H + 30 || m.alpha <= 0) {
+            m.x = Math.random() * W;
+            m.y = -20;
+            m.alpha = 0.6 + Math.random() * 0.4;
+            m.len = 40 + Math.random() * 70;
+            m.speed = 3 + Math.random() * 6;
+          }
+          ctx.save();
+          ctx.strokeStyle = `rgba(212, 175, 55, ${Math.max(0, m.alpha)})`;
+          ctx.lineWidth = m.size;
+          ctx.beginPath();
+          ctx.moveTo(m.x, m.y);
+          ctx.lineTo(m.x - m.len, m.y - m.len * 0.5);
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        // black hole shadow (event horizon)
+        const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, Math.min(W, H) * 0.25);
+        grad.addColorStop(0, '#0b0f1a');
+        grad.addColorStop(0.6, '#05080f');
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.min(W, H) * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // inner glow
+        const glow = ctx.createRadialGradient(cx - 20, cy - 20, 2, cx, cy, 70);
+        glow.addColorStop(0, 'rgba(212, 175, 55, 0.15)');
+        glow.addColorStop(0.5, 'rgba(212, 175, 55, 0.04)');
+        glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 70, 0, Math.PI * 2);
+        ctx.fill();
+
+        // accretion ring (thin)
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.12)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.min(W, H) * 0.17, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.06)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.min(W, H) * 0.21, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      function animateBH() {
+        ctx.clearRect(0, 0, W, H);
+        drawBlackHole();
+        requestAnimationFrame(animateBH);
+      }
+      animateBH();
+
+      // ---------- AUDIO (deep hum) ----------
+      let audioCtx = null, gainNode = null, isPlaying = false;
+
+      function initAudio() {
+        if (audioCtx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.04;
+        gainNode.connect(audioCtx.destination);
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 72;
+        const osc2 = audioCtx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = 146;
+        const g2 = audioCtx.createGain();
+        g2.gain.value = 0.02;
+        osc.connect(gainNode);
+        osc2.connect(g2);
+        g2.connect(gainNode);
+        osc.start();
+        osc2.start();
+      }
+
+      function toggleSound() {
+        if (!audioCtx) initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (isPlaying) {
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.7);
+          document.getElementById('sound-off').classList.remove('hidden');
+          document.getElementById('sound-on').classList.add('hidden');
+          isPlaying = false;
+        } else {
+          gainNode.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime + 0.5);
+          document.getElementById('sound-off').classList.add('hidden');
+          document.getElementById('sound-on').classList.remove('hidden');
+          isPlaying = true;
+        }
+      }
+      document.getElementById('btn-sound').addEventListener('click', toggleSound);
+
+      // ---------- SCROLL STEPPER ----------
+      const sections = document.querySelectorAll('section');
+      const steps = document.querySelectorAll('.step-dot');
+      const progressFill = document.getElementById('progress-fill');
+      let currentIdx = 0, isScrolling = false;
+
+      function updateStep(idx) {
+        currentIdx = idx;
+        const pct = (idx / (sections.length - 1)) * 100;
+        progressFill.style.width = pct + '%';
+        steps.forEach((st, i) => {
+          st.classList.toggle('active', i === idx);
+        });
+      }
+
+      function goTo(idx) {
+        if (idx < 0 || idx >= sections.length || isScrolling) return;
+        isScrolling = true;
+        sections[idx].scrollIntoView({ behavior: 'smooth' });
+        updateStep(idx);
+        setTimeout(() => isScrolling = false, 600);
+      }
+
+      steps.forEach((st, i) => st.addEventListener('click', () => goTo(i)));
+
+      // wheel + touch
+      let touchY = 0;
+      window.addEventListener('wheel', (e) => {
+        if (isScrolling) return;
+        if (e.deltaY > 15) goTo(currentIdx + 1);
+        else if (e.deltaY < -15) goTo(currentIdx - 1);
+      }, { passive: true });
+
+      window.addEventListener('touchstart', (e) => touchY = e.touches[0].clientY, { passive: true });
+      window.addEventListener('touchend', (e) => {
+        if (isScrolling) return;
+        const diff = touchY - e.changedTouches[0].clientY;
+        if (Math.abs(diff) > 30) {
+          diff > 0 ? goTo(currentIdx + 1) : goTo(currentIdx - 1);
+        }
+      }, { passive: true });
+
+      // update on scroll (for snap)
+      let lastScroll = 0;
+      window.addEventListener('scroll', () => {
+        const top = window.scrollY;
+        if (Math.abs(top - lastScroll) < 20) return;
+        lastScroll = top;
+        const h = window.innerHeight;
+        const idx = Math.min(sections.length - 1, Math.round(top / h));
+        if (idx !== currentIdx) updateStep(idx);
+      }, { passive: true });
+
+      // ---------- STARDUST PARTICLES ----------
+      function burst(x, y) {
+        for (let i = 0; i < 16; i++) {
+          const el = document.createElement('div');
+          el.className = 'particle-burst';
+          const size = 2 + Math.random() * 5;
+          el.style.width = size + 'px';
+          el.style.height = size + 'px';
+          el.style.background = ['#d4af37', '#f0e9d0', '#c0cbd6', '#d4af37'][Math.floor(Math.random() * 4)];
+          el.style.boxShadow = '0 0 12px ' + el.style.background;
+          el.style.left = x + 'px';
+          el.style.top = y + 'px';
+          const angle = Math.random() * 6.28;
+          const dist = 30 + Math.random() * 70;
+          el.style.setProperty('--dx', (x + Math.cos(angle) * dist) + 'px');
+          el.style.setProperty('--dy', (y + Math.sin(angle) * dist) + 'px');
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 700);
+        }
+      }
+      window.addEventListener('click', (e) => burst(e.clientX, e.clientY));
+
+      // ---------- CURSOR ----------
+      const dot = document.getElementById('cursor-dot');
+      const ring = document.getElementById('cursor-ring');
+      let mx = 0, my = 0, rx = 0, ry = 0;
+      window.addEventListener('mousemove', (e) => {
+        mx = e.clientX; my = e.clientY;
+        dot.style.transform = `translate(${mx}px, ${my}px) translate(-50%, -50%)`;
+      });
+      function cursorLoop() {
+        rx += (mx - rx) * 0.12;
+        ry += (my - ry) * 0.12;
+        ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
+        requestAnimationFrame(cursorLoop);
+      }
+      cursorLoop();
+
+      // ---------- BLESSING MODAL ----------
+      const modal = document.getElementById('bless-modal');
+      const trigger = document.getElementById('bless-trigger');
+      const closeBtn = document.getElementById('close-modal');
+
+      trigger.addEventListener('click', (e) => {
+        modal.classList.add('open');
+        burst(e.clientX || W/2, e.clientY || H/2);
+      });
+      closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+
+    })();
+  </script>
+</body>
+  </html>
